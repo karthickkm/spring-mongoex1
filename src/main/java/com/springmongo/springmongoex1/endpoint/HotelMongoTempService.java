@@ -9,15 +9,15 @@ import com.springmongo.springmongoex1.mongo.model.Hotel;
 import com.springmongo.springmongoex1.mongo.model.Review;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.BasicQuery;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/hotelTemp")
@@ -61,6 +61,82 @@ public class HotelMongoTempService {
 
         return mongoTemplate.find(query, Hotel.class);
     }
+
+    // Not clear
+    @GetMapping("/findByNameUsingCriteriaPattern/{name}")
+    public List<Hotel> getHotelByIdCriteriaPattern(@PathVariable("name") String name) {
+        Criteria criteria = where("name").regex(Pattern.compile(".*"+name));
+        Query query = new Query(criteria);
+        return mongoTemplate.find(query, Hotel.class);
+    }
+
+    @PostMapping("/save")
+    public boolean upsertHotel(@RequestBody Hotel hotel) {
+        mongoTemplate.save(hotel);
+        return true;
+    }
+
+    @GetMapping("/updateName/{oldName}/{newName}")
+    public boolean updateHotelName(@PathVariable("oldName") String oldName, @PathVariable("newName") String newName) {
+
+        Query query = query(where("name").is(oldName));
+        Update update = update("name",newName);
+        mongoTemplate.updateFirst(query, update, Hotel.class);
+        return true;
+    }
+
+    @GetMapping("/updateName2/{oldName}/{newName}")
+    public boolean updateHotelName2(@PathVariable("oldName") String oldName, @PathVariable("newName") String newName) {
+
+        Hotel hotel = mongoTemplate.find(query(where("name").is(oldName)), Hotel.class).get(0); // Both are same. Notice the arg of Basic query
+       /* BasicQuery query = new BasicQuery("{name:'"+oldName+"'}");
+        Hotel hotel = mongoTemplate.find(query, Hotel.class).get(0); */
+
+        hotel.setName(newName);
+        mongoTemplate.save(hotel);
+        return true;
+    }
+
+    @GetMapping("/updateName3/{oldName}/{addrNo}/{addrStreet}/{newName}")
+    public boolean updateHotelName3(@PathVariable("oldName") String oldName, @PathVariable("addrNo") int addrNo,
+                                    @PathVariable("addrStreet") String addrStreet, @PathVariable("newName") String newName) {
+        Hotel hotel = mongoTemplate.find(
+                query(
+                        where("name").is(oldName)
+                                .and("address.no").is(addrNo)
+                                .and("address.street").is(addrStreet)
+                ), Hotel.class).get(0);
+
+        hotel.setName(newName);
+        mongoTemplate.save(hotel);
+        return true;
+    }
+
+    @GetMapping("/updateName4/{oldName}/{addrNo}/{addrStreet}/{newName}")
+    public boolean updateHotelName4(@PathVariable("oldName") String oldName, @PathVariable("addrNo") int addrNo,
+                                    @PathVariable("addrStreet") String addrStreet, @PathVariable("newName") String newName) {
+        Query query = query(
+                where("name").is(oldName)
+                        .and("address.no").is(addrNo)
+                        .and("address.street").is(addrStreet)
+        );
+        Update update = update("name", newName);
+        mongoTemplate.updateMulti(query, update, Hotel.class);
+        return true;
+    }
+
+    @GetMapping("/remove/{name}/{addrNo}/{addrStreet}")
+    public boolean removeHotel(@PathVariable("name") String name, @PathVariable("addrNo") int addrNo,
+                                    @PathVariable("addrStreet") String addrStreet) {
+        Query query = query(
+                where("name").is(name)
+                        .and("address.no").is(addrNo)
+                        .and("address.street").is(addrStreet)
+        );
+        mongoTemplate.remove(query, Hotel.class);
+        return true;
+    }
+
 
 
 }

@@ -4,6 +4,8 @@ public class Address {
 
 	private int no;
 	private String street;
+
+	public Address() { }
 	
 	public Address(int no, String street) {
 		this.no = no;
