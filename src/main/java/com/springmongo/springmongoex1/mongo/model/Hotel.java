@@ -9,6 +9,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.IndexDirection;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 /**
  * @author 372153
@@ -19,6 +20,8 @@ public class Hotel {
 
 	@Id
 	private String id;
+
+	@Field(value = "name")
 	private String name;
 
 	@Indexed(direction = IndexDirection.ASCENDING)
